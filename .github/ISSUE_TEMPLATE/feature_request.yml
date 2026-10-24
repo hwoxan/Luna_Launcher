@@ -1,11 +1,11 @@
 name: Feature request
-description: Suggest an idea for Plume
+description: Suggest an idea for Luna
 labels: [enhancement]
 body:
   - type: markdown
     attributes:
       value: |
-        Plume stays small on purpose. Please read [what's in and out of scope](https://github.com/aradhyas8/Plume_Launcher/blob/main/CONTRIBUTING.md#whats-out-of-scope) before suggesting something.
+        Luna stays small on purpose. Please read [what's in and out of scope](https://github.com/aradhyas8/Luna_Launcher/blob/main/CONTRIBUTING.md#whats-out-of-scope) before suggesting something.
   - type: textarea
     id: problem
     attributes:
@@ -27,7 +27,7 @@ body:
   - type: checkboxes
     id: scope
     attributes:
-      label: Fit with Plume
+      label: Fit with Luna
       options:
         - label: This doesn't add ads, tracking, an account, or a third-party library.
           required: true

@@ -322,11 +322,11 @@ class MainActivity : Activity() {
             prefs.edit().remove("reopen_settings").apply()
             ui.post { openLauncherSettings(R.string.theme) }
         } else if (!homeServiceOn() && !prefs.getBoolean("setup_shown", false)) {
-            // Fresh install: walk through making Home land on Plume, the one step that has to happen by hand.
+            // Fresh install: walk through making Home land on Luna, the one step that has to happen by hand.
             prefs.edit().putBoolean("setup_shown", true).apply()
             ui.post { startHomeSetup() }
         } else if (notesUnseen()) {
-            ui.post { whatsNewCard() } // after an update; the self-updater reopens Plume, so it's seen right away
+            ui.post { whatsNewCard() } // after an update; the self-updater reopens Luna, so it's seen right away
         }
 
         registerReceiver(packageReceiver, IntentFilter().apply {
@@ -449,7 +449,7 @@ class MainActivity : Activity() {
 
     private fun toggleHomeButton() = if (homeServiceOn()) turnOffHomeButton() else turnOnHomeButton()
 
-    /** Off hands Home back to the TV's own launcher, and Plume leaves it off until switched on again. */
+    /** Off hands Home back to the TV's own launcher, and Luna leaves it off until switched on again. */
     private fun turnOffHomeButton() {
         prefs.edit().putBoolean("home_off", true).apply()
         HomeOverride.running?.disableSelf()
@@ -515,7 +515,7 @@ class MainActivity : Activity() {
     }
 
     // ---------- Home setup ----------
-    // Popups that try each way of making Home land on Plume, stopping at the first that works: the default-home
+    // Popups that try each way of making Home land on Luna, stopping at the first that works: the default-home
     // role, then the Home button service, then adb help for TVs that grey out the service (Android 13+
     // "restricted settings" for sideloaded apps). Each way is checked by asking for a Home press: one that
     // reaches us arrives as a Home intent; one that doesn't sends us to the background.
@@ -579,7 +579,7 @@ class MainActivity : Activity() {
         },
         getString(R.string.setup_not_now) to { setupDialog?.dismiss() })
 
-    /** The one-time grant lets Plume switch the service on itself, past the greyed-out toggle. */
+    /** The one-time grant lets Luna switch the service on itself, past the greyed-out toggle. */
     private fun adbPopup() {
         val mono = Typeface.MONOSPACE
         val code = LinearLayout(this).apply {
@@ -613,7 +613,7 @@ class MainActivity : Activity() {
 
     /**
      * Once after an update: the first three CHANGELOG.md lines of this version, so put the best ones first.
-     * Closing it counts as reading the notes, which clears the dot on the Plume settings icon.
+     * Closing it counts as reading the notes, which clears the dot on the Luna settings icon.
      */
     private fun whatsNewCard() {
         prefs.edit().putString("seen_notes", myVersion()).apply()
@@ -1140,7 +1140,7 @@ class MainActivity : Activity() {
     private var panelFrom: View? = null // focus to go back to when the panel closes
 
     /**
-     * Plume settings, as a short list of sections that each open a page. [at] is the string id of the row to
+     * Luna settings, as a short list of sections that each open a page. [at] is the string id of the row to
      * focus: a row inside a section opens that section on it; a section or a top-level row focuses it in the
      * main list. Rows are found by name, so adding one never moves the others.
      */
@@ -1293,7 +1293,7 @@ class MainActivity : Activity() {
     private fun <T> List<T>.step(current: T, dir: Int) = this[((indexOf(current) + dir) % size + size) % size]
 
     // Pages inside the settings panel (wallpaper list, app toggles…) instead of system dialogs, so they
-    // match Plume's look. Back goes up one page; from the main list it closes the panel.
+    // match Luna's look. Back goes up one page; from the main list it closes the panel.
 
     private var pageBack: (() -> Unit)? = null
     private var pageExit: (() -> Unit)? = null // cleanup when the page goes away (stops the upload server)
@@ -1325,7 +1325,7 @@ class MainActivity : Activity() {
     }
 
     // ---------- layout lock ----------
-    // A PIN in front of Plume settings, the Wi-Fi and Android settings icons, and everything that changes the home
+    // A PIN in front of Luna settings, the Wi-Fi and Android settings icons, and everything that changes the home
     // screen; apps still open as usual. It keeps the layout safe from small hands, it doesn't keep apps from kids:
     // voice search and the remote's Settings button get past it, so it's called a layout lock, not parental controls.
 
@@ -1333,7 +1333,7 @@ class MainActivity : Activity() {
 
     private var unlockedUntil = 0L // one PIN covers a few minutes of changes, until the home screen is left
     private var pinFails = 0
-    private var pinWaitUntil = 0L // ponytail: in memory, so restarting Plume resets the wait; fine for kids at a remote
+    private var pinWaitUntil = 0L // ponytail: in memory, so restarting Luna resets the wait; fine for kids at a remote
     private var pinBox: View? = null
 
     private fun locked() = lockOn() && SystemClock.elapsedRealtime() > unlockedUntil
@@ -2092,7 +2092,7 @@ class MainActivity : Activity() {
         ))
     }
 
-    /** Apps the user installed, and system apps that have an update on top. Never Plume or an HDMI tile. */
+    /** Apps the user installed, and system apps that have an update on top. Never Luna or an HDMI tile. */
     private fun canUninstall(pkg: String): Boolean {
         if (pkg == packageName || pkg.startsWith(HDMI)) return false
         return try {
@@ -2124,8 +2124,8 @@ class MainActivity : Activity() {
         ))
     }
 
-    /** A small Plume-styled menu just above [anchor]; Back closes it. */
-    /** A small Plume-styled menu just above [anchor] (under it when [below]); Back closes it. [rows] builds its rows. */
+    /** A small Luna-styled menu just above [anchor]; Back closes it. */
+    /** A small Luna-styled menu just above [anchor] (under it when [below]); Back closes it. [rows] builds its rows. */
     private fun popupMenu(anchor: View, below: Boolean = false, rows: (dismiss: () -> Unit) -> List<View>) {
         val list = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -2368,7 +2368,7 @@ class MainActivity : Activity() {
         if (folder != null) paintingsDir(this).deleteRecursively() // not needed for photos: give the space back
         if (galleryOn()) return
         if (checkSelfPermission(WRITE_SECURE) != PackageManager.PERMISSION_GRANTED) {
-            // Without the adb permission Plume can't switch it itself; Android's own list has getString(R.string.gallery).
+            // Without the adb permission Luna can't switch it itself; Android's own list has getString(R.string.gallery).
             Toast.makeText(this, getString(R.string.choose_gallery_hint), Toast.LENGTH_LONG).show()
             return openScreensaverSettings()
         }
@@ -2414,7 +2414,7 @@ class MainActivity : Activity() {
                 paintingsDir(this).deleteRecursively()
                 part.renameTo(paintingsDir(this))
             } catch (e: Exception) {
-                android.util.Log.w("Plume", "paintings download failed ($e)")
+                android.util.Log.w("Luna", "paintings download failed ($e)")
                 part.deleteRecursively()
                 false
             }
@@ -2455,7 +2455,7 @@ class MainActivity : Activity() {
             val latest = try {
                 getJson("https://api.github.com/repos/$REPO/releases/latest").getString("tag_name").removePrefix("v")
             } catch (e: Exception) {
-                android.util.Log.w("Plume", "update check failed ($e)")
+                android.util.Log.w("Luna", "update check failed ($e)")
                 null
             }
             if (latest != null) prefs.edit().putString("upd_ver", latest).putLong("upd_time", System.currentTimeMillis()).apply()
@@ -2507,7 +2507,7 @@ class MainActivity : Activity() {
 
     private val badge by lazy { GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(BADGE) } }
 
-    /** A dot on the Plume settings icon while an update waits or its notes are unread. */
+    /** A dot on the Luna settings icon while an update waits or its notes are unread. */
     private fun updateBadge() {
         val icon = findViewById<ImageView>(R.id.launcherSettings)
         icon.overlay.clear()
@@ -2535,8 +2535,8 @@ class MainActivity : Activity() {
                 val id = installer.createSession(params)
                 installer.openSession(id).use { session ->
                     try {
-                        openStream("https://github.com/$REPO/releases/download/v$ver/Plume.apk").use { input ->
-                            session.openWrite("Plume.apk", 0, -1).use { out ->
+                        openStream("https://github.com/$REPO/releases/download/v$ver/Luna.apk").use { input ->
+                            session.openWrite("Luna.apk", 0, -1).use { out ->
                                 input.copyTo(out)
                                 session.fsync(out)
                             }
@@ -2552,7 +2552,7 @@ class MainActivity : Activity() {
                 }
                 true
             } catch (e: Exception) {
-                android.util.Log.w("Plume", "update download failed ($e)")
+                android.util.Log.w("Luna", "update download failed ($e)")
                 false
             }
             ui.post {
@@ -2576,7 +2576,7 @@ class MainActivity : Activity() {
         updating = false
         if (status != PackageInstaller.STATUS_SUCCESS) {
             val why = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-            android.util.Log.w("Plume", "update install failed: $status $why")
+            android.util.Log.w("Luna", "update install failed: $status $why")
             if (status != PackageInstaller.STATUS_FAILURE_ABORTED) {
                 Toast.makeText(this, getString(R.string.update_install_failed), Toast.LENGTH_LONG).show()
             }
@@ -2764,7 +2764,7 @@ class MainActivity : Activity() {
      * 2. Apps' own home-screen channels the user switched on (see [channelOn]); ones named "Continue Watching"
      *    are on to start with. Stremio publishes one (with progress and an autoPlay resume link) instead of
      *    using Watch Next, so signing in to Stremio on the TV is all it takes. Channel rows carry no timestamps,
-     *    so they use the time the app was last opened from Plume, keeping the app's own order among themselves.
+     *    so they use the time the app was last opened from Luna, keeping the app's own order among themselves.
      * Newest first across apps, each app's [PER_APP] newest ahead of the rest, so one app with ten shows can't bury the others.
      */
     private fun queryWatchNext(): List<Prog> {
@@ -3229,7 +3229,7 @@ class MainActivity : Activity() {
         const val RIM_TOP_LIT = 0x38FFFFFF // white 22%
         const val RIM_SIDE_LIT = 0x17FFFFFF
         const val PANEL_EDGE = 0x0FFFFFFF // white 6%, the settings panel's left edge
-        const val HELP_URL = "https://github.com/aradhyas8/Plume_Launcher#home-button-on-android-13-and-newer"
+        const val HELP_URL = "https://github.com/aradhyas8/Luna_Launcher#home-button-on-android-13-and-newer"
         const val TOGGLE_ON = "\u0000on" // row values drawn as a switch instead of text
         const val TOGGLE_OFF = "\u0000off"
         const val DARK_DIM = 115 // alpha of the black laid over the Bing picture in dark mode (45%)
@@ -3245,7 +3245,7 @@ class MainActivity : Activity() {
             60 to R.string.every_60, 1440 to R.string.every_1440,
         )
         const val CHOSEN = "✓"
-        const val REPO = "aradhyas8/Plume_Launcher"
+        const val REPO = "aradhyas8/Luna_Launcher"
         const val UPDATE_STATUS = "dev.plume.UPDATE_STATUS"
         const val WRITE_EPG ="com.android.providers.tv.permission.WRITE_EPG_DATA"
         const val TV_SETTINGS = "com.android.tv.settings"

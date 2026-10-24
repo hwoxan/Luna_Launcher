@@ -31,7 +31,7 @@
     </queries>
 
     <application
-        android:label="Plume"
+        android:label="Luna"
         android:banner="@drawable/banner"
         android:icon="@drawable/banner"
         android:usesCleartextTraffic="true"

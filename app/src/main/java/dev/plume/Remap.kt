@@ -11,7 +11,7 @@ import android.provider.Settings
 import android.view.KeyEvent
 
 /**
- * Remote key remapping. Plume's Home key service already sees every key before any app does, so a key mapped
+ * Remote key remapping. Luna's Home key service already sees every key before any app does, so a key mapped
  * here is handled there: [Entry.short] runs on a press and [Entry.long] on a hold ("" when unset). An action is
  * "none" (swallow the key), "app:<package>", "hdmi:<input id>", "media:<name>", "sys:<name>" or "open:<place>" (Android's Settings).
  * Kept in one preference string ("home"/"keymap", a line per key) and in memory only once a key is pressed.
@@ -27,7 +27,7 @@ object Remap {
 
     private var map: LinkedHashMap<String, Entry>? = null
 
-    // Keys that move around Plume or leave it: never learned, never changed, so a remote can't be locked out.
+    // Keys that move around Luna or leave it: never learned, never changed, so a remote can't be locked out.
     private val KEEP = intArrayOf(
         KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
         KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_BACK,

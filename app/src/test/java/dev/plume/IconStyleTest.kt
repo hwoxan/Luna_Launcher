@@ -21,7 +21,7 @@ class IconStyleTest {
     }
 
     @Test fun peopleWhoChoseColourBeforeStylesStayOnColour() {
-        // Plume before the Banner style kept Colour as an on/off setting and no style.
+        // Luna before the Banner style kept Colour as an on/off setting and no style.
         assertEquals("colour", iconStyleOf(null, oldColour = true))
     }
 

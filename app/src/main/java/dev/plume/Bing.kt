@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The Bing picture of the day, as a choice in the wallpaper list. Nothing goes online unless someone picks it.
- * The home screen asks for a lookup at most once a day while Plume is open: there is no service and no alarm.
+ * The home screen asks for a lookup at most once a day while Luna is open: there is no service and no alarm.
  * One JPEG is kept on disk and replaced when the picture changes. Choosing another wallpaper deletes it. Offline,
  * or if Bing stops answering, the last picture stays and nothing is shown. Only the picture shows: no title.
  */
@@ -72,14 +72,14 @@ internal object Bing {
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.w("Plume", "Bing picture failed ($e)") // logged only: yesterday's picture stays
+                android.util.Log.w("Luna", "Bing picture failed ($e)") // logged only: yesterday's picture stays
             } finally {
                 inFlight.set(false)
             }
         }
     }
 
-    /** No wallpaper uses it any more: the picture and what Plume remembers about it go, at once. */
+    /** No wallpaper uses it any more: the picture and what Luna remembers about it go, at once. */
     fun dropIfUnused(c: Context, prefs: SharedPreferences) = synchronized(lock) {
         if (used(prefs)) return@synchronized
         file(c).delete()
@@ -92,7 +92,7 @@ internal object Bing {
         val l = Locale.getDefault()
         val market = if (l.country.isEmpty()) "en-US" else "${l.language}-${l.country}"
         // HPImageArchive.aspx is not documented by Microsoft. It can change or stop without notice. If the picture
-        // stops coming, look here first: Plume then keeps the last picture and shows no error.
+        // stops coming, look here first: Luna then keeps the last picture and shows no error.
         val image = JSONObject(connect("https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&uhd=1&uhdwidth=$WIDTH&uhdheight=$HEIGHT&mkt=$market")
             .inputStream.use { it.readBytes().decodeToString() }).getJSONArray("images").getJSONObject(0)
         val path = image.getString("url")
