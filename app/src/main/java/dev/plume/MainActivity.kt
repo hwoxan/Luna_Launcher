@@ -2540,7 +2540,7 @@ class MainActivity : Activity() {
                 installer.openSession(id).use { session ->
                     try {
                         openStream("https://github.com/$REPO/releases/download/v$ver/app-release.apk").use { input ->
-                            session.openWrite("Luna.apk", 0, -1).use { out ->
+                            session.openWrite("app-release.apk", 0, -1).use { out ->
                                 input.copyTo(out)
                                 session.fsync(out)
                             }
