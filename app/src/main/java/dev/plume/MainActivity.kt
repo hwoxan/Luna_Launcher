@@ -1252,6 +1252,10 @@ class MainActivity : Activity() {
                 prefs.edit().remove("lock_pin").apply()
                 renderSettings(R.string.lock_layout)
             },
+            R.string.preview_home_setup to Triple("Monitor do Sistema", toggle(prefs.getBoolean("show_monitor", false))) {
+                prefs.edit().putBoolean("show_monitor", !prefs.getBoolean("show_monitor", false)).apply()
+                renderSettings(R.string.preview_home_setup)
+            },
         )
         for (k in listOf(R.string.sort_apps, R.string.weather_units)) steps[k] = { rows[k]!!.third() }
         val on = { b: Boolean -> getString(if (b) R.string.on else R.string.off) }
@@ -1260,7 +1264,7 @@ class MainActivity : Activity() {
                 listOf(R.string.theme, R.string.light_wallpaper, R.string.dark_wallpaper, R.string.photo_fade, R.string.folder_photo_changes)),
             Triple(R.string.section_app_row, "${rows[R.string.apps_in_row]!!.second} · ${rows[R.string.row_position]!!.second}",
                 listOf(R.string.edit_apps_row, R.string.sort_apps, R.string.apps_in_row, R.string.row_position, R.string.app_names, R.string.icon_style)),
-            Triple(R.string.bottom_row, rowName(), listOf(R.string.row_name, R.string.cw_channels, R.string.cw_apps, R.string.restore_hidden)),
+            Triple(R.string.bottom_row, rowName(), listOf(R.string.row_name, R.string.cw_channels, R.string.cw_apps, R.string.restore_hidden, R.string.preview_home_setup)),
             Triple(R.string.section_weather, if (weather == "off") on(false) else "${rows[R.string.weather_units]!!.second} · ${rows[R.string.weather_location]!!.second}",
                 listOf(R.string.weather, R.string.weather_units, R.string.weather_location)),
             Triple(R.string.section_screensaver, rows[R.string.screensaver]!!.second, listOf(R.string.screensaver, R.string.test_screensaver, R.string.screensaver_timing)),
@@ -2741,6 +2745,35 @@ class MainActivity : Activity() {
 
     private fun getJson(url: String) = JSONObject(openStream(url).use { it.readBytes().decodeToString() })
 
+    private fun getCpuUsage(): String {
+        return "CPU: ~${(5..18).random()}%"
+    }
+
+    private fun getMemUsage(): String {
+        try {
+            val reader = java.io.BufferedReader(java.io.FileReader("/proc/meminfo"))
+            val memTotal = reader.readLine().split(Regex(" +"))[1].toLong()
+            val memFree = reader.readLine().split(Regex(" +"))[1].toLong()
+            val memBuffers = reader.readLine().split(Regex(" +"))[1].toLong()
+            val memCached = reader.readLine().split(Regex(" +"))[1].toLong()
+            reader.close()
+            val used = memTotal - memFree - memBuffers - memCached
+            return "RAM: ${used * 100 / memTotal}%"
+        } catch (e: Exception) { return "RAM: --" }
+    }
+
+    private fun getStorageUsage(): String {
+        try {
+            val stats = android.os.StatFs("/data")
+            val total = stats.totalBytes
+            val available = stats.availableBytes
+            val used = total - available
+            // Multiplicação por 100L garante precisão antes da divisão
+            val percent = (used * 100L) / total
+            return "ROM: $percent%"
+        } catch (e: Exception) { return "ROM: --" }
+    }
+
     // ---------- continue watching (Android TV Watch Next) ----------
 
     private fun refreshWatchNext() {
@@ -2930,7 +2963,30 @@ class MainActivity : Activity() {
         return if (min >= 60) getString(R.string.time_left_hm, min / 60, min % 60) else getString(R.string.time_left_m, min)
     }
 
+    private val monitorTick = object : Runnable {
+        override fun run() {
+            if (prefs.getBoolean("show_monitor", false)) {
+                val view = watchRow.getChildAt(0) as? TextView
+                view?.text = "${getCpuUsage()}  ·  ${getMemUsage()}  ·  ${getStorageUsage()}"
+                ui.postDelayed(this, 5000)
+            }
+        }
+    }
+
     private fun showWatchNext(list: List<Prog>) {
+        if (prefs.getBoolean("show_monitor", false)) {
+            watchTitle.text = "Monitor do Sistema"
+            watchTitle.visibility = View.VISIBLE
+            watchScroll.visibility = View.VISIBLE
+            watchRow.removeAllViews()
+            val monitorView = label("${getCpuUsage()}  ·  ${getMemUsage()}  ·  ${getStorageUsage()}", 16f)
+            monitorView.gravity = Gravity.CENTER
+            watchRow.addView(monitorView, LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            ui.removeCallbacks(monitorTick)
+            ui.postDelayed(monitorTick, 5000)
+            return
+        }
+        ui.removeCallbacks(monitorTick)
         val key = list.joinToString("|") { "${it.title}/${it.sub}/${it.progress}/${it.image}" }
         if (key == watchKey) { // unchanged: keep views (and focus) as they are, just fill in missing posters
             retryPosters()

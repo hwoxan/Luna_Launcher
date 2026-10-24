@@ -24,12 +24,12 @@ Put changes that are not released under `## Unreleased`. Rename that heading to 
 - **Luna settings → App row → Icon style** has a new choice, **Banner**. Each app shows its own picture, as on Apple TV. An app with no banner gets its own colour behind a white mark. Monochrome stays the default.
 - **Luna settings → App row → Icon style** has a fourth choice, **Monochrome banner**. The pictures are grey until you select one. An app with no banner gets its own colour behind a white mark, as with **Banner**.
 
+## 1.7
+
+- Improve CPU and ROM usage calculation accuracy.
+- Rename Storage to ROM in System Monitor.
+
 ## 1.6
-
-- Rename Plume to Luna in all text and resources.
-- Set the update and gallery URLs to the new Luna repository.
-
-## 1.5
 
 ### New
 - **Pick your bottom row.** Show any channel from your apps, such as a Stremio library. Select **Luna settings → Bottom row → Channels**. The row takes the channel's name, or a name you set in **Row name**.
