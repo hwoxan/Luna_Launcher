@@ -50,6 +50,11 @@
     <string name="edit_apps_row">Edit apps row</string>
     <string name="theme">Theme</string>
     <string name="photo_fade">Photo fade</string>
+    <string name="accent_color">Accent color</string>
+    <string name="accent_purple">Purple</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_red">Red</string>
+    <string name="accent_dark_subtle">Dark subtle</string>
     <string name="sort_apps">Sort apps</string>
     <string name="manual">Manual</string>
     <string name="most_used">Most used</string>

@@ -246,6 +246,7 @@ class MainActivity : Activity() {
     private var ground = Color.WHITE
     private var cardRest = intArrayOf(Color.WHITE, Color.WHITE)
     private var cardLit = cardRest
+    private var accentColor = 0xFFBB86FC.toInt() // Default purple
 
     private lateinit var appRow: LinearLayout
     private lateinit var watchRow: LinearLayout
@@ -728,6 +729,8 @@ class MainActivity : Activity() {
         // 70%, light ones frosted grey at 78%, and focus lifts them to 80% and 95%.
         cardRest = if (dark) DARK_CARD else intArrayOf(0xC8E2E5E9.toInt(), 0xC8D8DCE1.toInt())
         cardLit = if (dark) DARK_CARD_LIT else intArrayOf(0xF2FFFFFF.toInt(), 0xF2FFFFFF.toInt())
+        // Accent color for focus highlights
+        accentColor = if (dark) accentColor(prefs) else 0xFF2196F3.toInt()
         // Must match the colour each wallpaper fades into, or the bottom edge shows a seam.
         ground = if (dark) DARK_BG else 0xFFF3F5F7.toInt()
         findViewById<View>(R.id.root).setBackgroundColor(ground)
@@ -887,6 +890,19 @@ class MainActivity : Activity() {
             }
         }
         showPage(getString(R.string.folder_photo_changes), rows, PHOTO_EVERY.keys.indexOf(photoEvery())) { renderSettings(R.string.folder_photo_changes) }
+    }
+
+    private fun pickAccentColor() {
+        val current = prefs.getString("accent_color", "purple") ?: "purple"
+        val rows = ACCENT_COLORS.keys.map { key ->
+            page(getString(ACCENT_NAME[key]!!), if (key == current) CHOSEN else "") {
+                prefs.edit().putString("accent_color", key).apply()
+                applyTheme()
+                renderApps()
+                renderSettings(R.string.accent_color)
+            }
+        }
+        showPage(getString(R.string.accent_color), rows, ACCENT_COLORS.keys.toList().indexOf(current)) { renderSettings(R.string.accent_color) }
     }
 
     // ---------- remote keys ----------
@@ -1190,6 +1206,7 @@ class MainActivity : Activity() {
                 renderSettings(R.string.photo_fade)
             },
             R.string.folder_photo_changes to Triple(getString(R.string.folder_photo_changes), getString(PHOTO_EVERY[photoEvery()]!!)) { pickPhotoEvery() },
+            R.string.accent_color to Triple(getString(R.string.accent_color), getString(ACCENT_NAME[prefs.getString("accent_color", "purple")!!]!!)) { pickAccentColor() },
             R.string.sort_apps to Triple(getString(R.string.sort_apps), if (sort == "manual") getString(R.string.manual) else getString(R.string.most_used)) {
                 prefs.edit().putString("sort", if (sort == "manual") "usage" else "manual").apply()
                 renderApps()
@@ -1261,7 +1278,7 @@ class MainActivity : Activity() {
         val on = { b: Boolean -> getString(if (b) R.string.on else R.string.off) }
         val sections = listOf(
             Triple(R.string.section_appearance, "${rows[R.string.theme]!!.second} · ${wallpaperName(currentWallpaper(dark))}",
-                listOf(R.string.theme, R.string.light_wallpaper, R.string.dark_wallpaper, R.string.photo_fade, R.string.folder_photo_changes)),
+                listOf(R.string.theme, R.string.light_wallpaper, R.string.dark_wallpaper, R.string.photo_fade, R.string.folder_photo_changes, R.string.accent_color)),
             Triple(R.string.section_app_row, "${rows[R.string.apps_in_row]!!.second} · ${rows[R.string.row_position]!!.second}",
                 listOf(R.string.edit_apps_row, R.string.sort_apps, R.string.apps_in_row, R.string.row_position, R.string.app_names, R.string.icon_style)),
             Triple(R.string.bottom_row, rowName(), listOf(R.string.row_name, R.string.cw_channels, R.string.cw_apps, R.string.restore_hidden, R.string.preview_home_setup)),
@@ -3200,10 +3217,12 @@ class MainActivity : Activity() {
         val glass = (if (lit) DARK_CARD_LIT else DARK_CARD).let { c -> if (solid) IntArray(c.size) { c[it] or 0xFF000000.toInt() } else c }
         val body = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, glass).apply {
             cornerRadius = radius.toFloat()
-            setStroke(1, if (lit) RIM_SIDE_LIT else RIM_SIDE) // 1px, not 1dp: a hairline stays crisp
-            setDither(true) // near black the gradient has ~8 steps; dithered, they don't show as bands
+            val strokeColor = if (lit) accentColor else RIM_SIDE
+            setStroke(1, strokeColor)
+            setDither(true)
         }
-        return Baked("rim $radius $lit $solid", LayerDrawable(arrayOf(body, ColorDrawable(if (lit) RIM_TOP_LIT else RIM_TOP))).apply {
+        val topColor = if (lit) accentColor else RIM_TOP
+        return Baked("rim $radius $lit $solid ${topColor.toHexString()}", LayerDrawable(arrayOf(body, ColorDrawable(topColor))).apply {
             setLayerGravity(1, Gravity.TOP or Gravity.FILL_HORIZONTAL)
             setLayerHeight(1, 1)
             setLayerInsetLeft(1, radius)
@@ -3284,6 +3303,27 @@ class MainActivity : Activity() {
         const val RIM_SIDE = 0x0AFFFFFF // white 4%
         const val RIM_TOP_LIT = 0x38FFFFFF // white 22%
         const val RIM_SIDE_LIT = 0x17FFFFFF
+
+        // Accent color choices for focus highlights
+        private val ACCENT_COLORS = mapOf(
+            "purple" to 0xFFBB86FC.toInt(),
+            "blue" to 0xFF2196F3.toInt(),
+            "red" to 0xFFF44336.toInt(),
+            "dark_subtle" to 0xFF4A4A4A.toInt()
+        )
+
+        private fun accentColor(prefs: SharedPreferences): Int {
+            val key = prefs.getString("accent_color", "purple") ?: "purple"
+            return ACCENT_COLORS[key] ?: ACCENT_COLORS["purple"]!!
+        }
+
+        private val ACCENT_NAME = mapOf(
+            "purple" to R.string.accent_purple,
+            "blue" to R.string.accent_blue,
+            "red" to R.string.accent_red,
+            "dark_subtle" to R.string.accent_dark_subtle
+        )
+
         const val PANEL_EDGE = 0x0FFFFFFF // white 6%, the settings panel's left edge
         const val HELP_URL = "https://github.com/aradhyas8/Luna_Launcher#home-button-on-android-13-and-newer"
         const val TOGGLE_ON = "\u0000on" // row values drawn as a switch instead of text

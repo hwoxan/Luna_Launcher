@@ -24,6 +24,10 @@ Put changes that are not released under `## Unreleased`. Rename that heading to 
 - **Luna settings → App row → Icon style** has a new choice, **Banner**. Each app shows its own picture, as on Apple TV. An app with no banner gets its own colour behind a white mark. Monochrome stays the default.
 - **Luna settings → App row → Icon style** has a fourth choice, **Monochrome banner**. The pictures are grey until you select one. An app with no banner gets its own colour behind a white mark, as with **Banner**.
 
+## 1.10
+
+- Add color accent selector to appearance settings.
+
 ## 1.9
 
 - Align session write filename with update downloader.
