@@ -29,4 +29,8 @@ Você pode copiar arquivos `.jpg`, `.png` ou `.webp` para a pasta do aplicativo 
 ```bash
 adb push meu-papel-de-parede.jpg /sdcard/Android/data/dev.luna/files/wallpapers/
 ```
+
+Você também pode adicionar papéis de parede diretamente pelas configurações do Luna, acessando a seção de personalização de aparência.
+
+![Tela Inicial 3](tela_inicial_3.png)
 EOF
