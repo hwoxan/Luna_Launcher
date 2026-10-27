@@ -1,4 +1,4 @@
-package dev.plume
+package dev.luna
 
 import android.content.Context
 import android.content.SharedPreferences

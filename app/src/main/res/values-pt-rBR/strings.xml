@@ -79,13 +79,13 @@
     <string name="gallery">Galeria</string>
     <string name="home_button">Botão Home</string>
     <string name="default_launcher">Launcher padrão</string>
-    <string name="plume_press_change">Luna: pressione para alterar</string>
+    <string name="luna_press_change">Luna: pressione para alterar</string>
     <string name="press_to_set">Pressione para definir</string>
     <string name="updates">Atualizações</string>
     <string name="updating">Atualizando…</string>
     <string name="checking">Verificando…</string>
     <string name="lock_layout">Bloquear layout</string>
-    <string name="plume_settings">Configurações do Luna</string>
+    <string name="luna_settings">Configurações do Luna</string>
     <string name="enter_pin">Digite o PIN</string>
     <string name="wrong_pin">PIN incorreto</string>
     <string name="choose_pin">Escolha um PIN</string>

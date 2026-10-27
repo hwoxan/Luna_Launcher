@@ -87,13 +87,13 @@
     <string name="screensaver_timing">Screensaver timing</string>
     <string name="home_button">Home button</string>
     <string name="default_launcher">Default launcher</string>
-    <string name="plume_press_change">Luna: press to change</string>
+    <string name="luna_press_change">Luna: press to change</string>
     <string name="press_to_set">Press to set</string>
     <string name="updates">Updates</string>
     <string name="updating">Updating…</string>
     <string name="checking">Checking…</string>
     <string name="lock_layout">Lock layout</string>
-    <string name="plume_settings">Luna settings</string>
+    <string name="luna_settings">Luna settings</string>
     <string name="enter_pin">Enter PIN</string>
     <string name="wrong_pin">Wrong PIN</string>
     <string name="choose_pin">Choose a PIN</string>

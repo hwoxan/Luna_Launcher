@@ -6,15 +6,15 @@ plugins {
 
 // No dependencies on purpose: framework Views only, to keep RAM and APK size minimal.
 android {
-    namespace = "dev.plume"
+    namespace = "dev.luna"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.plume"
+        applicationId = "dev.luna"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.11"
+        versionCode = 9
+        versionName = "1.12"
         // What's new: only this version's section of CHANGELOG.md ships, one entry per line, without ** marks.
         val notes = rootProject.file("CHANGELOG.md").readText().replace("\r", "")
             .substringAfter("\n## $versionName\n", "").substringBefore("\n## ")

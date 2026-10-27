@@ -14,7 +14,7 @@
     <!-- Folder wallpapers: asked for only when someone picks "Choose a folder on this TV". -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <!-- Granted once over adb (pm grant dev.plume android.permission.WRITE_SECURE_SETTINGS) so the app can
+    <!-- Granted once over adb (pm grant dev.luna android.permission.WRITE_SECURE_SETTINGS) so the app can
          re-enable its Home service: Android drops it from the enabled list whenever the app is force-stopped. -->
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"

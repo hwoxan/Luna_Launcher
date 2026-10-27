@@ -1,4 +1,4 @@
-package dev.plume
+package dev.luna
 
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
@@ -448,7 +448,7 @@ class MainActivity : Activity() {
         Settings.Secure.putInt(contentResolver, Settings.Secure.ACCESSIBILITY_ENABLED, 1)
     }
 
-    /** Compared as components: Settings may store us in short form (dev.plume/.HomeOverride). */
+    /** Compared as components: Settings may store us in short form (dev.luna/.HomeOverride). */
     private fun homeServiceOn(): Boolean {
         val me = ComponentName(this, HomeOverride::class.java)
         return Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
@@ -749,7 +749,7 @@ class MainActivity : Activity() {
     }
 
     // ---------- wallpapers ----------
-    // Bundled ones have their fade baked in. Your own go in Android/data/dev.plume/files/wallpapers/
+    // Bundled ones have their fade baked in. Your own go in Android/data/dev.luna/files/wallpapers/
     // (adb push, no permission needed) and get the fade painted once when loaded. A folder on the TV (MediaStore,
     // so USB drives too) shows its photos in shuffled turns, one decoded at a time.
     // Each theme remembers its own pick. Decoded off the UI thread, max 1080p (~8 MB). Full colour, not RGB_565:
@@ -1267,7 +1267,7 @@ class MainActivity : Activity() {
             R.string.weather_location to Triple(getString(R.string.weather_location), if (manualCity()) prefs.getString("geo_city", null) ?: "" else "Automatic") { pickCity() },
             R.string.setup_home to Triple(getString(R.string.setup_home), "") { closeLauncherSettings(); startHomeSetup() },
             R.string.home_button to Triple(getString(R.string.home_button), toggle(homeServiceOn())) { toggleHomeButton() },
-            R.string.default_launcher to Triple(getString(R.string.default_launcher), if (isDefaultHome()) getString(R.string.plume_press_change) else getString(R.string.press_to_set)) { makeDefaultHome() },
+            R.string.default_launcher to Triple(getString(R.string.default_launcher), if (isDefaultHome()) getString(R.string.luna_press_change) else getString(R.string.press_to_set)) { makeDefaultHome() },
             R.string.updates to Triple(getString(R.string.updates), when {
                 updating -> getString(R.string.updating)
                 checking -> getString(R.string.checking)
@@ -1328,7 +1328,7 @@ class MainActivity : Activity() {
             listOf(R.string.updates, R.string.lock_layout).map { it to rows[it]!! } +
             listOfNotNull(if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) null
                 else R.string.preview_home_setup to page(getString(R.string.preview_home_setup)) { closeLauncherSettings(); previewHomeSetup() })
-        showPage(getString(R.string.plume_settings), top.map { it.second }, maxOf(0, top.indexOfFirst { it.first == at }), back = null)
+        showPage(getString(R.string.luna_settings), top.map { it.second }, maxOf(0, top.indexOfFirst { it.first == at }), back = null)
     }
 
     private var lastSettings = 0 // section used last, focused when settings open again
@@ -3268,7 +3268,7 @@ class MainActivity : Activity() {
         )
         const val CHOSEN = "✓"
         const val REPO = "hwoxan/Luna_Launcher"
-        const val UPDATE_STATUS = "dev.plume.UPDATE_STATUS"
+        const val UPDATE_STATUS = "dev.luna.UPDATE_STATUS"
         const val WRITE_EPG ="com.android.providers.tv.permission.WRITE_EPG_DATA"
         const val TV_SETTINGS = "com.android.tv.settings"
         const val HDMI = "hdmi:" // App.pkg prefix for HDMI device tiles; the rest is the TV input id

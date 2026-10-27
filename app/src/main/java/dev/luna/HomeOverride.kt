@@ -1,4 +1,4 @@
-package dev.plume
+package dev.luna
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent

@@ -1,4 +1,4 @@
-package dev.plume
+package dev.luna
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

@@ -116,7 +116,7 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginStart="8dp"
-                android:contentDescription="@string/plume_settings"
+                android:contentDescription="@string/luna_settings"
                 android:focusable="true"
                 android:padding="8dp"
                 android:src="@drawable/ic_tune" />
@@ -140,7 +140,7 @@
         <!-- Both rows: the scroller reaches 16dp (one grid gap) past the content edges on each side and
              clips there. That is room for the focus lift, while the next item, a gap away, stays hidden.
              Same on left and right, and SnapScrollView scrolls by whole items. -->
-        <dev.plume.SnapScrollView
+        <dev.luna.SnapScrollView
             android:id="@+id/appScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -169,7 +169,7 @@
                     android:orientation="horizontal" />
 
                 <!-- Name of the focused app, slid under its tile (tvOS style). In the scroll content, so it scrolls along. -->
-                <dev.plume.FittingLabel
+                <dev.luna.FittingLabel
                     android:id="@+id/rowLabel"
                     android:layout_width="200dp"
                     android:layout_height="20dp"
@@ -188,7 +188,7 @@
                     android:orientation="horizontal"
                     android:visibility="gone" />
             </LinearLayout>
-        </dev.plume.SnapScrollView>
+        </dev.luna.SnapScrollView>
 
         <TextView
             android:id="@+id/watchTitle"
@@ -201,7 +201,7 @@
             android:textSize="14sp"
             android:visibility="gone" />
 
-        <dev.plume.SnapScrollView
+        <dev.luna.SnapScrollView
             android:id="@+id/watchScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -223,7 +223,7 @@
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:orientation="horizontal" />
-        </dev.plume.SnapScrollView>
+        </dev.luna.SnapScrollView>
     </LinearLayout>
 
     <!-- All apps: hidden until the Apps tile is pressed; Back closes it. -->
@@ -290,7 +290,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
                 android:paddingStart="14dp"
-                android:text="@string/plume_settings"
+                android:text="@string/luna_settings"
                 android:textSize="20sp" />
 
             <!-- Scrolls once the rows outgrow the screen; focus moving down scrolls it along. -->

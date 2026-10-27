@@ -1,4 +1,4 @@
-package dev.plume
+package dev.luna
 
 import android.content.SharedPreferences
 import android.view.KeyEvent

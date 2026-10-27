@@ -71,13 +71,13 @@
     <string name="gallery">Galeri</string>
     <string name="home_button">Ana Ekran tuşu</string>
     <string name="default_launcher">Varsayılan başlatıcı</string>
-    <string name="plume_press_change">Luna: değiştirmek için basın</string>
+    <string name="luna_press_change">Luna: değiştirmek için basın</string>
     <string name="press_to_set">Ayarlamak için basın</string>
     <string name="updates">Güncellemeler</string>
     <string name="updating">Güncelleniyor…</string>
     <string name="checking">Denetleniyor…</string>
     <string name="lock_layout">Düzeni kilitle</string>
-    <string name="plume_settings">Luna ayarları</string>
+    <string name="luna_settings">Luna ayarları</string>
     <string name="enter_pin">PIN girin</string>
     <string name="wrong_pin">Yanlış PIN</string>
     <string name="choose_pin">Bir PIN belirleyin</string>

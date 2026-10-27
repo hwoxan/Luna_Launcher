@@ -71,13 +71,13 @@
     <string name="gallery">المعرض</string>
     <string name="home_button">زر الرئيسية</string>
     <string name="default_launcher">المشغّل الافتراضي</string>
-    <string name="plume_press_change">Luna: اضغط للتغيير</string>
+    <string name="luna_press_change">Luna: اضغط للتغيير</string>
     <string name="press_to_set">اضغط للتعيين</string>
     <string name="updates">التحديثات</string>
     <string name="updating">جارٍ التحديث…</string>
     <string name="checking">جارٍ التحقق…</string>
     <string name="lock_layout">قفل التخطيط</string>
-    <string name="plume_settings">إعدادات Luna</string>
+    <string name="luna_settings">إعدادات Luna</string>
     <string name="enter_pin">أدخل الرمز</string>
     <string name="wrong_pin">رمز خاطئ</string>
     <string name="choose_pin">اختر رمزًا</string>
