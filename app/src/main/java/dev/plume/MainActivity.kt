@@ -64,6 +64,7 @@ import android.util.LruCache
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewOutlineProvider
 import android.view.ViewGroup
 import android.view.Window
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -221,9 +222,11 @@ class MainActivity : Activity() {
                        val group: String? = pkg)
 
     private val prefs by lazy { getSharedPreferences("home", MODE_PRIVATE) }
-    private val io = Executors.newSingleThreadExecutor()
-    // Posters get their own threads: one slow image server must not hold up the rest (or the row data).
-    private val posterIo = Executors.newFixedThreadPool(3)
+    // Use CPU-aware thread pools to avoid contention on low-end TV hardware
+    private val cpuCount = maxOf(2, Runtime.getRuntime().availableProcessors())
+    private val io = Executors.newFixedThreadPool(cpuCount)
+    // Posters get their own pool, capped to avoid OOM on slow networks
+    private val posterIo = Executors.newFixedThreadPool(minOf(3, cpuCount))
     private val loading = java.util.Collections.synchronizedSet(HashSet<String>())
     private val ui = Handler(Looper.getMainLooper())
     private val posters = object : LruCache<String, Bitmap>(6 * 1024 * 1024) {
@@ -247,6 +250,12 @@ class MainActivity : Activity() {
     private var cardRest = intArrayOf(Color.WHITE, Color.WHITE)
     private var cardLit = cardRest
     private var accentColor = 0xFFBB86FC.toInt() // Default purple
+
+    // Caches for frequently created drawables to avoid GC pressure on focus changes
+    private val rimCardCache = mutableMapOf<String, Baked>()
+    private var lightCardRest: Baked? = null
+    private var lightCardLit: Baked? = null
+    private val sheenCache = mutableMapOf<Int, Baked>()
 
     private lateinit var appRow: LinearLayout
     private lateinit var watchRow: LinearLayout
@@ -364,8 +373,6 @@ class MainActivity : Activity() {
         ui.postDelayed(themeTick, 60_000L)
         ui.removeCallbacks(wallpaperTick)
         ui.post(wallpaperTick)
-        // Gallery chosen but its paintings missing (updated from a version that bundled them): fetch them.
-        if (galleryOn() && photoScreensaver() == null && !paintingsReady(this)) downloadPaintings {}
         checkUpdate(force = false)
         Bing.onChanged = bingChanged
         Bing.refresh(applicationContext, prefs)
@@ -651,7 +658,7 @@ class MainActivity : Activity() {
             setPadding(dp(28), dp(24), dp(28), dp(20))
             background = if (dark) rimCard(dp(16), false, solid = true) else GradientDrawable().apply {
                 cornerRadius = dp(16).toFloat()
-                setColor(0xFFF7F8FA.toInt())
+                setColor(0xE6F7F8FA.toInt())
             }
             if (step > 0) addView(label(getString(R.string.setup_step, step), 12f).apply { secondary(0.6f) })
             addView(label(title, 22f).apply { setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(4), 0, 0) })
@@ -1133,11 +1140,22 @@ class MainActivity : Activity() {
     private fun showPanel() {
         panelFrom = currentFocus
         // Dark: true black, set apart from the home screen by a hairline on its left edge.
-        findViewById<View>(R.id.settingsPanel).background = if (!dark) ColorDrawable(0xFFF7F8FA.toInt())
-            else LayerDrawable(arrayOf(ColorDrawable(DARK_BG), ColorDrawable(PANEL_EDGE))).apply {
-                setLayerGravity(1, Gravity.START or Gravity.FILL_VERTICAL)
-                setLayerWidth(1, 1)
-            }
+        val radius = dp(16).toFloat()
+        val shape = floatArrayOf(radius, radius, 0f, 0f, 0f, 0f, radius, radius)
+        val panel = findViewById<View>(R.id.settingsPanel)
+        panel.background = if (!dark) GradientDrawable().apply {
+            cornerRadii = shape
+            setColor(0xE6F7F8FA.toInt())
+        }
+        else LayerDrawable(arrayOf(GradientDrawable().apply {
+            cornerRadii = shape
+            setColor(0xE6000000.toInt())
+        }, ColorDrawable(PANEL_EDGE))).apply {
+            setLayerGravity(1, Gravity.START or Gravity.FILL_VERTICAL)
+            setLayerWidth(1, 1)
+        }
+        panel.clipToOutline = true
+        panel.outlineProvider = ViewOutlineProvider.BACKGROUND
         findViewById<TextView>(R.id.settingsTitle).setTextColor(fg)
         settingsScrim.visibility = View.VISIBLE
         homeFocusable(false)
@@ -1247,13 +1265,6 @@ class MainActivity : Activity() {
                 renderSettings(R.string.weather_units)
             },
             R.string.weather_location to Triple(getString(R.string.weather_location), if (manualCity()) prefs.getString("geo_city", null) ?: "" else "Automatic") { pickCity() },
-            R.string.screensaver to Triple(getString(R.string.screensaver), when {
-                downloading -> getString(R.string.downloading_gallery)
-                !galleryOn() -> screensaverName()
-                else -> photoScreensaver()?.let { wallpaperName(it) } ?: getString(R.string.gallery)
-            }) { pickScreensaver() },
-            R.string.test_screensaver to Triple(getString(R.string.test_screensaver), "") { testScreensaver() },
-            R.string.screensaver_timing to Triple(getString(R.string.screensaver_timing), "") { openScreensaverSettings() },
             R.string.setup_home to Triple(getString(R.string.setup_home), "") { closeLauncherSettings(); startHomeSetup() },
             R.string.home_button to Triple(getString(R.string.home_button), toggle(homeServiceOn())) { toggleHomeButton() },
             R.string.default_launcher to Triple(getString(R.string.default_launcher), if (isDefaultHome()) getString(R.string.plume_press_change) else getString(R.string.press_to_set)) { makeDefaultHome() },
@@ -1270,7 +1281,19 @@ class MainActivity : Activity() {
                 renderSettings(R.string.lock_layout)
             },
             R.string.preview_home_setup to Triple("Monitor do Sistema", toggle(prefs.getBoolean("show_monitor", false))) {
-                prefs.edit().putBoolean("show_monitor", !prefs.getBoolean("show_monitor", false)).apply()
+                val show = !prefs.getBoolean("show_monitor", false)
+                prefs.edit().putBoolean("show_monitor", show).apply()
+                val chFlip = prefs.getStringSet("ch_flip", emptySet())!!.toMutableSet()
+                if (show) {
+                    // Disable all continue watching: Watch Next + all app channels
+                    chFlip.add(WATCH_NEXT)
+                    // Remove all other channel keys so they default to OFF
+                    appChannels().forEach { (_, p, n) -> chFlip.remove(channelKey(p, n)) }
+                } else {
+                    chFlip.remove(WATCH_NEXT)
+                }
+                prefs.edit().putStringSet("ch_flip", chFlip).apply()
+                refreshWatchNext()
                 renderSettings(R.string.preview_home_setup)
             },
         )
@@ -1284,7 +1307,6 @@ class MainActivity : Activity() {
             Triple(R.string.bottom_row, rowName(), listOf(R.string.row_name, R.string.cw_channels, R.string.cw_apps, R.string.restore_hidden, R.string.preview_home_setup)),
             Triple(R.string.section_weather, if (weather == "off") on(false) else "${rows[R.string.weather_units]!!.second} · ${rows[R.string.weather_location]!!.second}",
                 listOf(R.string.weather, R.string.weather_units, R.string.weather_location)),
-            Triple(R.string.section_screensaver, rows[R.string.screensaver]!!.second, listOf(R.string.screensaver, R.string.test_screensaver, R.string.screensaver_timing)),
             Triple(R.string.section_home, on(homeServiceOn() || isDefaultHome()), listOf(R.string.setup_home, R.string.home_button, R.string.default_launcher)),
         )
         val section = sections.firstOrNull { at in it.third }
@@ -1415,11 +1437,11 @@ class MainActivity : Activity() {
             // Only the box being changed shows its digit.
             b.text = if (digits[i] == null) "" else if (i == at) digits[i].toString() else "•"
             b.background = GradientDrawable().apply {
-                cornerRadius = dp(8).toFloat()
+                cornerRadius = dp(16).toFloat()
                 setColor(Color.WHITE)
                 if (i == at) setStroke(dp(2), fg)
             }
-            if (dark) b.background = rimCard(dp(8), i == at)
+            if (dark) b.background = rimCard(dp(16), i == at)
         }
         fun submit() {
             val error = done(digits.joinToString("")) ?: return
@@ -1480,7 +1502,7 @@ class MainActivity : Activity() {
 
     /** A settings row; with [step], Left and Right change its value in place, and ‹ › show that while focused. */
     private fun settingsRow(title: String, value: String, step: ((Int) -> Unit)? = null, action: () -> Unit): View {
-        val bg = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0, 0)).apply { cornerRadius = dp(8).toFloat() }
+        val bg = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0, 0)).apply { cornerRadius = dp(16).toFloat() }
         return LinearLayout(this).apply {
             id = View.generateViewId()
             orientation = LinearLayout.HORIZONTAL
@@ -1519,7 +1541,7 @@ class MainActivity : Activity() {
     private fun switch(on: Boolean) = FrameLayout(this).apply {
         val faint = fg and 0xFFFFFF or 0x66000000
         background = GradientDrawable().apply {
-            cornerRadius = dp(10).toFloat()
+            cornerRadius = dp(16).toFloat()
             if (on) setColor(fg) else setStroke(dp(2), faint)
         }
         addView(View(context).apply {
@@ -2153,7 +2175,7 @@ class MainActivity : Activity() {
             setPadding(dp(6), dp(6), dp(6), dp(6))
             background = if (dark) rimCard(dp(12), false, solid = true) else GradientDrawable().apply {
                 cornerRadius = dp(12).toFloat()
-                setColor(0xFFF7F8FA.toInt())
+                setColor(0xE6F7F8FA.toInt())
             }
             elevation = if (dark) 0f else dp(8).toFloat()
         }
@@ -2336,124 +2358,6 @@ class MainActivity : Activity() {
         homeFocusable(true)
         renderApps()
         findViewById<View>(R.id.allAppsButton).requestFocus() // back where it was opened from
-    }
-
-    // ---------- screensaver ----------
-    // Gallery on: remember whatever screensaver was set (Aerial Views here) and switch to ours.
-    // Gallery off: put that one back. Needs the adb-granted WRITE_SECURE_SETTINGS, like the Home service.
-
-    private fun gallery() = ComponentName(this, GalleryDream::class.java).flattenToString()
-
-    private fun currentScreensaver() = Settings.Secure.getString(contentResolver, "screensaver_components").orEmpty()
-
-    private fun galleryOn() = currentScreensaver() == gallery()
-
-    private fun screensaverName(component: String = currentScreensaver()): String {
-        val pkg = ComponentName.unflattenFromString(component)?.packageName ?: return getString(R.string.off)
-        return try {
-            packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
-        } catch (e: PackageManager.NameNotFoundException) {
-            getString(R.string.system_default)
-        }
-    }
-
-    /** The folder the Gallery screensaver shows instead of paintings, or null for paintings. */
-    private fun photoScreensaver() = prefs.getString("ss_folder", null)
-
-    private fun pickScreensaver(focus: Int = 0) {
-        val paintings = galleryOn() && photoScreensaver() == null
-        val photos = galleryOn() && photoScreensaver() != null
-        val other = if (galleryOn()) prefs.getString("prev_screensaver", "").orEmpty() else currentScreensaver()
-        showPage(getString(R.string.screensaver), listOf(
-            page(getString(R.string.gallery_paintings), if (paintings) CHOSEN else if (downloading) getString(R.string.downloading) else PAINTINGS_MB) {
-                useGallery(null)
-                pickScreensaver(0)
-            },
-            page(getString(R.string.your_photos), if (photos) "${wallpaperName(photoScreensaver()!!)} $CHOSEN" else "") {
-                pickFolder({ pickScreensaver(1) }) { choice ->
-                    useGallery(choice)
-                    pickScreensaver(1)
-                }
-            },
-            page(screensaverName(other), if (galleryOn()) "" else CHOSEN) {
-                if (galleryOn()) stopGallery()
-                pickScreensaver(2)
-            },
-        ), focus) { renderSettings(R.string.screensaver) }
-    }
-
-    /** Gallery on, with paintings ([folder] null, downloaded first if needed) or a folder of photos. */
-    private fun useGallery(folder: String?) {
-        prefs.edit().putString("ss_folder", folder).apply()
-        if (folder == null && !paintingsReady(this)) return downloadPaintings { useGallery(null) }
-        if (folder != null) paintingsDir(this).deleteRecursively() // not needed for photos: give the space back
-        if (galleryOn()) return
-        if (checkSelfPermission(WRITE_SECURE) != PackageManager.PERMISSION_GRANTED) {
-            // Without the adb permission Luna can't switch it itself; Android's own list has getString(R.string.gallery).
-            Toast.makeText(this, getString(R.string.choose_gallery_hint), Toast.LENGTH_LONG).show()
-            return openScreensaverSettings()
-        }
-        prefs.edit().putString("prev_screensaver", currentScreensaver()).apply()
-        Settings.Secure.putString(contentResolver, "screensaver_components", gallery())
-        Settings.Secure.putInt(contentResolver, "screensaver_enabled", 1)
-    }
-
-    /** Back to whatever screensaver was set before Gallery. */
-    private fun stopGallery() {
-        if (checkSelfPermission(WRITE_SECURE) != PackageManager.PERMISSION_GRANTED) return openScreensaverSettings()
-        Settings.Secure.putString(contentResolver, "screensaver_components", prefs.getString("prev_screensaver", "") ?: "")
-        paintingsDir(this).deleteRecursively() // another screensaver is in charge: give the space back
-    }
-
-    /** Android's screensaver settings (timing, sleep): plain Android TV and Google TV name them differently. */
-    private fun openScreensaverSettings() {
-        for (action in listOf(Settings.ACTION_DREAM_SETTINGS, "com.google.android.tv.settings.ambient")) {
-            try {
-                return startActivity(Intent(action))
-            } catch (e: Exception) {
-            }
-        }
-        openSettings(Settings.ACTION_SETTINGS)
-    }
-
-    @Volatile private var downloading = false
-
-    /**
-     * Fetches the Gallery paintings into a temporary folder and only swaps it in once every file arrived,
-     * so a dropped connection never leaves a half-filled Gallery behind.
-     */
-    private fun downloadPaintings(then: () -> Unit) {
-        if (downloading) return
-        downloading = true
-        Toast.makeText(this, getString(R.string.downloading_paintings, PAINTINGS_MB), Toast.LENGTH_SHORT).show()
-        Thread {
-            val part = File(filesDir, "paintings.part").apply { deleteRecursively(); mkdirs() }
-            val ok = try {
-                for (f in PAINTING_FILES) openStream(PAINTINGS_URL + f).use { input ->
-                    File(part, f).outputStream().use { input.copyTo(it) }
-                }
-                paintingsDir(this).deleteRecursively()
-                part.renameTo(paintingsDir(this))
-            } catch (e: Exception) {
-                android.util.Log.w("Luna", "paintings download failed ($e)")
-                part.deleteRecursively()
-                false
-            }
-            ui.post {
-                downloading = false
-                if (ok) then() else Toast.makeText(this, getString(R.string.paintings_failed), Toast.LENGTH_LONG).show()
-                if (settingsScrim.visibility == View.VISIBLE) renderSettings(R.string.screensaver)
-            }
-        }.start()
-    }
-
-    /** Starts whichever screensaver is set, through SystemUI's "dream now" entry point. */
-    private fun testScreensaver() {
-        try {
-            startActivity(Intent(Intent.ACTION_MAIN).setClassName("com.android.systemui", "com.android.systemui.Somnambulator"))
-        } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.cant_dream), Toast.LENGTH_SHORT).show()
-        }
     }
 
     // ---------- updates (GitHub releases) ----------
@@ -2996,7 +2900,7 @@ class MainActivity : Activity() {
             watchTitle.visibility = View.VISIBLE
             watchScroll.visibility = View.VISIBLE
             watchRow.removeAllViews()
-            val monitorView = label("${getCpuUsage()}  ·  ${getMemUsage()}  ·  ${getStorageUsage()}", 16f)
+            val monitorView = labelNoEllipse("${getCpuUsage()}  ·  ${getMemUsage()}  ·  ${getStorageUsage()}", 16f)
             monitorView.gravity = Gravity.CENTER
             watchRow.addView(monitorView, LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
             ui.removeCallbacks(monitorTick)
@@ -3186,9 +3090,17 @@ class MainActivity : Activity() {
             setDither(true)
         }
         val sheenColors = intArrayOf(0x40FFFFFF, 0x00FFFFFF)
-        val sheen = Baked("sheen $radius", gradient(sheenColors)).apply { alpha = 0 }
-        val rest = if (card) Baked("card $radius ${cardRest.contentToString()}", gradient(cardRest)) else null
-        val lit = if (card) Baked("card $radius ${cardLit.contentToString()}", gradient(cardLit)) else null
+        val sheen = sheenCache.getOrPut(radius) {
+            Baked("sheen $radius", gradient(sheenColors)).apply { alpha = 0 }
+        }
+
+        // Cache light mode card backgrounds to avoid recreating on every style() call
+        if (card) {
+            if (lightCardRest == null) lightCardRest = Baked("card $radius ${cardRest.contentToString()}", gradient(cardRest))
+            if (lightCardLit == null) lightCardLit = Baked("card $radius ${cardLit.contentToString()}", gradient(cardLit))
+        }
+        val rest = if (card) lightCardRest else null
+        val lit = if (card) lightCardLit else null
         v.background = if (dark && card) rimCard(radius, false) else rest ?: GradientDrawable().apply { cornerRadius = radius.toFloat() }
         if (!dark) v.foreground = sheen
         v.clipToOutline = true
@@ -3214,20 +3126,23 @@ class MainActivity : Activity() {
      * dialogs, which sit over other things and have to stay readable (light mode's are solid too).
      */
     private fun rimCard(radius: Int, lit: Boolean, solid: Boolean = false): Drawable {
-        val glass = (if (lit) DARK_CARD_LIT else DARK_CARD).let { c -> if (solid) IntArray(c.size) { c[it] or 0xFF000000.toInt() } else c }
-        val body = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, glass).apply {
-            cornerRadius = radius.toFloat()
-            val strokeColor = if (lit) accentColor else RIM_SIDE
-            setStroke(1, strokeColor)
-            setDither(true)
+        val key = "rim $radius $lit $solid ${accentColor.toHexString()}"
+        return rimCardCache.getOrPut(key) {
+            val glass = (if (lit) DARK_CARD_LIT else DARK_CARD).let { c -> if (solid) IntArray(c.size) { c[it] or 0xFF000000.toInt() } else c }
+            val body = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, glass).apply {
+                cornerRadius = radius.toFloat()
+                val strokeColor = if (lit) accentColor else RIM_SIDE
+                setStroke(1, strokeColor)
+                setDither(true)
+            }
+            val topColor = if (lit) accentColor else RIM_TOP
+            Baked(key, LayerDrawable(arrayOf(body, ColorDrawable(topColor))).apply {
+                setLayerGravity(1, Gravity.TOP or Gravity.FILL_HORIZONTAL)
+                setLayerHeight(1, 1)
+                setLayerInsetLeft(1, radius)
+                setLayerInsetRight(1, radius)
+            })
         }
-        val topColor = if (lit) accentColor else RIM_TOP
-        return Baked("rim $radius $lit $solid ${topColor.toHexString()}", LayerDrawable(arrayOf(body, ColorDrawable(topColor))).apply {
-            setLayerGravity(1, Gravity.TOP or Gravity.FILL_HORIZONTAL)
-            setLayerHeight(1, 1)
-            setLayerInsetLeft(1, radius)
-            setLayerInsetRight(1, radius)
-        })
     }
 
     /**
@@ -3240,8 +3155,10 @@ class MainActivity : Activity() {
         private var bmp: Bitmap? = null
         override fun onBoundsChange(b: Rect) {
             src.setBounds(0, 0, b.width(), b.height())
-            bmp = if (b.isEmpty) null else baked.getOrPut("$key ${b.width()}x${b.height()}") {
-                Bitmap.createBitmap(b.width(), b.height(), Bitmap.Config.ARGB_8888).also { src.draw(Canvas(it)) }
+            val cacheKey = "$key ${b.width()}x${b.height()}"
+            bmp = if (b.isEmpty) null else baked.get(cacheKey) ?: Bitmap.createBitmap(b.width(), b.height(), Bitmap.Config.ARGB_8888).also {
+                src.draw(Canvas(it))
+                baked.put(cacheKey, it)
             }
         }
         override fun draw(c: Canvas) { bmp?.let { c.drawBitmap(it, bounds.left.toFloat(), bounds.top.toFloat(), paint) } }
@@ -3253,8 +3170,10 @@ class MainActivity : Activity() {
         override fun setTintList(t: ColorStateList?) { paint.colorFilter = t?.let { PorterDuffColorFilter(it.defaultColor, PorterDuff.Mode.SRC_IN) }; invalidateSelf() }
         @Deprecated("Deprecated in Java") override fun getOpacity() = PixelFormat.TRANSLUCENT
     }
-    // ponytail: never evicted; fine while only a few tile sizes exist, cap it if views start animating their size
-    private val baked = HashMap<String, Bitmap>()
+
+    private val baked = object : LruCache<String, Bitmap>(16) {
+        override fun sizeOf(key: String, value: Bitmap) = 1
+    }
 
     /** Supporting text: the secondary grey in dark mode, [lightAlpha] of the main colour in light mode. */
     private fun TextView.secondary(lightAlpha: Float) = if (dark) setTextColor(DARK_TEXT_2) else alpha = lightAlpha
@@ -3274,6 +3193,13 @@ class MainActivity : Activity() {
         setTextColor(fg)
         maxLines = 1
         ellipsize = TextUtils.TruncateAt.END
+    }
+
+    private fun labelNoEllipse(text: String, size: Float) = TextView(this).apply {
+        this.text = text
+        textSize = size
+        setTextColor(fg)
+        maxLines = 1
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()

@@ -67,11 +67,8 @@
     <string name="all_on">الكل يعمل</string>
     <string name="weather">الطقس</string>
     <string name="weather_units">وحدات الطقس</string>
-    <string name="screensaver">شاشة التوقف</string>
     <string name="downloading_gallery">جارٍ تنزيل المعرض…</string>
     <string name="gallery">المعرض</string>
-    <string name="test_screensaver">تجربة شاشة التوقف</string>
-    <string name="screensaver_timing">توقيت شاشة التوقف</string>
     <string name="home_button">زر الرئيسية</string>
     <string name="default_launcher">المشغّل الافتراضي</string>
     <string name="plume_press_change">Luna: اضغط للتغيير</string>
@@ -184,7 +181,6 @@
     <string name="section_appearance">المظهر</string>
     <string name="section_app_row">صف التطبيقات</string>
     <string name="section_weather">الطقس</string>
-    <string name="section_screensaver">شاشة التوقف</string>
     <string name="section_home">زر الرئيسية</string>
     <string name="bing_daily">صورة اليوم من Bing</string>
     <string name="sources">المصادر</string>

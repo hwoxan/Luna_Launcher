@@ -75,11 +75,8 @@
     <string name="all_on">Todos ligados</string>
     <string name="weather">Clima</string>
     <string name="weather_units">Unidades de clima</string>
-    <string name="screensaver">Protetor de tela</string>
     <string name="downloading_gallery">Baixando Galeria…</string>
     <string name="gallery">Galeria</string>
-    <string name="test_screensaver">Testar protetor de tela</string>
-    <string name="screensaver_timing">Tempo do protetor de tela</string>
     <string name="home_button">Botão Home</string>
     <string name="default_launcher">Launcher padrão</string>
     <string name="plume_press_change">Luna: pressione para alterar</string>
@@ -187,7 +184,6 @@
     <string name="section_appearance">Aparência</string>
     <string name="section_app_row">Linha de apps</string>
     <string name="section_weather">Clima</string>
-    <string name="section_screensaver">Protetor de tela</string>
     <string name="section_home">Botão Home</string>
     <string name="sources">Entradas</string>
     <string name="no_signal">Sem sinal</string>

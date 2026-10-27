@@ -69,11 +69,8 @@
     <string name="all_on">Toutes activées</string>
     <string name="weather">Météo</string>
     <string name="weather_units">Unités météo</string>
-    <string name="screensaver">Écran de veille</string>
     <string name="downloading_gallery">Téléchargement de la Galerie…</string>
     <string name="gallery">Galerie</string>
-    <string name="test_screensaver">Tester l\'écran de veille</string>
-    <string name="screensaver_timing">Délai de l\'écran de veille</string>
     <string name="home_button">Bouton Accueil</string>
     <string name="default_launcher">Lanceur par défaut</string>
     <string name="plume_press_change">Luna : appuyez pour changer</string>
@@ -185,7 +182,6 @@
     <string name="section_appearance">Apparence</string>
     <string name="section_app_row">Ligne d\'applis</string>
     <string name="section_weather">Météo</string>
-    <string name="section_screensaver">Écran de veille</string>
     <string name="section_home">Bouton Accueil</string>
     <string name="sources">Sources</string>
     <string name="no_signal">Pas de signal</string>

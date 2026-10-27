@@ -67,11 +67,8 @@
     <string name="all_on">Tümü açık</string>
     <string name="weather">Hava Durumu</string>
     <string name="weather_units">Sıcaklık birimi</string>
-    <string name="screensaver">Ekran Koruyucu</string>
     <string name="downloading_gallery">Galeri indiriliyor…</string>
     <string name="gallery">Galeri</string>
-    <string name="test_screensaver">Ekran koruyucuyu test et</string>
-    <string name="screensaver_timing">Ekran koruyucu süresi</string>
     <string name="home_button">Ana Ekran tuşu</string>
     <string name="default_launcher">Varsayılan başlatıcı</string>
     <string name="plume_press_change">Luna: değiştirmek için basın</string>
@@ -177,7 +174,6 @@
     <string name="section_appearance">Görünüm</string>
     <string name="section_app_row">Uygulama satırı</string>
     <string name="section_weather">Hava Durumu</string>
-    <string name="section_screensaver">Ekran Koruyucu</string>
     <string name="section_home">Ana Ekran tuşu</string>
     <string name="sources">Kaynaklar</string>
     <string name="no_signal">Sinyal yok</string>
